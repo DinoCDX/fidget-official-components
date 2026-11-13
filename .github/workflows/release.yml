@@ -124,6 +124,7 @@ jobs:
         shell: python
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           import pathlib, subprocess
           tags = {}
