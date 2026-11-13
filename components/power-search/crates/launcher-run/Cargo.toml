@@ -1,0 +1,25 @@
+[package]
+name = "launcher-run"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "launcher"
+path = "src/main.rs"
+
+[dependencies]
+launcher-core = { path = "../launcher-core" }
+launcher-platform = { path = "../launcher-platform" }
+launcher-settings = { path = "../launcher-settings" }
+launcher-mod-apps = { path = "../launcher-mod-apps" }
+launcher-mod-calc = { path = "../launcher-mod-calc" }
+launcher-mod-files = { path = "../launcher-mod-files" }
+launcher-mod-windows = { path = "../launcher-mod-windows" }
+launcher-mod-system = { path = "../launcher-mod-system" }
+dark-light = "2"
+eframe = { version = "0.29", features = ["wgpu", "default_fonts"] }
+global-hotkey = "0.6"
+notify = "6"
+toml.workspace = true

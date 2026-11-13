@@ -1,0 +1,72 @@
+[[sections]]
+id = "general"
+title = "General"
+
+[[sections.fields]]
+type = "hotkey"
+key = "open_hotkey"
+label = "Open clipboard"
+default = "Ctrl+Alt+V"
+
+[[sections.fields]]
+type = "toggle"
+key = "history_enabled"
+label = "Clipboard history"
+default = true
+help = "Keeps recent text copies you can search, pin, and drag out"
+
+[[sections.fields]]
+type = "slider"
+key = "max_items"
+label = "Items kept"
+min = 10.0
+max = 200.0
+step = 5.0
+default = 50.0
+
+[[sections]]
+id = "sensitive"
+title = "Sensitive copies"
+description = "Copies that apps mark as private, such as passwords and tokens"
+
+[[sections.fields]]
+type = "toggle"
+key = "keep_sensitive"
+label = "Keep sensitive copies"
+default = true
+help = "Kept in memory only. Never saved to disk."
+
+[[sections.fields]]
+type = "slider"
+key = "sensitive_seconds"
+label = "Forget sensitive copies after"
+min = 15.0
+max = 600.0
+step = 15.0
+default = 120.0
+
+[[sections]]
+id = "media"
+title = "Recent screenshots and recordings"
+
+[[sections.fields]]
+type = "toggle"
+key = "media_enabled"
+label = "Show recent screenshots and recordings"
+default = true
+
+[[sections.fields]]
+type = "slider"
+key = "media_count"
+label = "Files shown"
+min = 5.0
+max = 50.0
+step = 5.0
+default = 20.0
+
+[[sections.fields]]
+type = "text"
+key = "media_folder"
+label = "Extra folder"
+default = ""
+help = "Leave empty to use the Windows Screenshots and Captures folders"

@@ -1,0 +1,12 @@
+[package]
+name = "launcher-mod-files"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+launcher-core = { path = "../launcher-core" }
+launcher-platform = { path = "../launcher-platform" }
+directories.workspace = true
+walkdir = "2"

@@ -1,0 +1,10 @@
+id = "power-search"
+name = "Power Search"
+version = "0.1.0"
+min_host_version = "0.1.0"
+developer = "DinoCDX"
+repository = "DinoCDX/fidget-official-components"
+executable = "launcher"
+layout_file = "layout.toml"
+default_hotkey = "Alt+Space"
+capabilities = ["hotkey", "clipboard_write", "file_read", "process_launch", "window_list"]

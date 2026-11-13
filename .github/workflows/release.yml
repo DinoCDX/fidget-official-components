@@ -1,0 +1,126 @@
+name: Components release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["*-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.component }} (${{ matrix.suffix }})
+    if: github.ref_type != 'tag' || startsWith(github.ref_name, format('{0}-v', matrix.component))
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: power-search
+            cargo_package: launcher-run
+            os: windows-latest
+            suffix: windows
+            binary: launcher.exe
+            inner: launcher.exe
+          - component: power-search
+            cargo_package: launcher-run
+            os: ubuntu-latest
+            suffix: linux
+            binary: launcher
+            inner: launcher
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev libx11-dev libxcb1-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libudev-dev libfontconfig1-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build stable
+        if: github.ref_type == 'tag'
+        run: cargo build --release -p ${{ matrix.cargo_package }}
+
+      - name: Build debug
+        if: github.ref_type != 'tag'
+        run: cargo build -p ${{ matrix.cargo_package }}
+
+      - name: Package and checksum
+        shell: python
+        env:
+          COMPONENT: ${{ matrix.component }}
+          SUFFIX: ${{ matrix.suffix }}
+          BINARY: ${{ matrix.binary }}
+          INNER: ${{ matrix.inner }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN: ${{ github.run_number }}
+        run: |
+          import hashlib, os, pathlib, re, zipfile
+          component = os.environ["COMPONENT"]
+          suffix = os.environ["SUFFIX"]
+          stable = os.environ["REF_TYPE"] == "tag"
+          profile = "release" if stable else "debug"
+          source = pathlib.Path("components") / component
+          manifest = (source / "component.toml").read_text()
+          version = re.search(r'^version\s*=\s*"([^"]+)"', manifest, re.M).group(1)
+          if stable:
+              tag = os.environ["REF_NAME"]
+              if tag != f"{component}-v{version}":
+                  raise SystemExit(f"tag {tag} does not match {component} version {version}")
+          else:
+              tag = f"{component}-debug-{os.environ['RUN']}"
+          out = pathlib.Path("dist")
+          out.mkdir(exist_ok=True)
+          name = f"{tag}-{suffix}.zip"
+          with zipfile.ZipFile(out / name, "w", zipfile.ZIP_DEFLATED) as archive:
+              archive.write(source / "component.toml", "component.toml")
+              archive.write(source / "layout.toml", "layout.toml")
+              archive.write(pathlib.Path("target") / profile / os.environ["BINARY"], os.environ["INNER"])
+          digest = hashlib.sha256((out / name).read_bytes()).hexdigest()
+          (out / (name + ".sha256")).write_text(f"{digest}  {name}\n")
+          print(name, digest)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: component-${{ matrix.component }}-${{ matrix.suffix }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish releases
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: component-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create one release per component version
+        shell: python
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          import os, pathlib, subprocess
+          files = sorted(pathlib.Path("dist").glob("*"))
+          tags = {}
+          for path in files:
+              if path.suffix == ".zip":
+                  tag = path.name[: -len(".zip")].rsplit("-", 1)[0]
+                  tags.setdefault(tag, []).append(str(path))
+                  tags[tag].append(str(path) + ".sha256")
+          for tag, assets in tags.items():
+              exists = subprocess.run(["gh", "release", "view", tag]).returncode == 0
+              if exists:
+                  subprocess.run(["gh", "release", "upload", tag, *assets, "--clobber"], check=True)
+              else:
+                  args = ["gh", "release", "create", tag, *assets, "--title", tag]
+                  if "-debug-" in tag:
+                      args.append("--prerelease")
+                  subprocess.run(args, check=True)

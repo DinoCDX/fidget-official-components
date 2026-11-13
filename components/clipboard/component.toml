@@ -1,0 +1,10 @@
+id = "clipboard"
+name = "Clipboard"
+version = "0.1.0"
+min_host_version = "0.1.0"
+developer = "DinoCDX"
+repository = "DinoCDX/fidget-official-components"
+executable = "clipboard"
+layout_file = "layout.toml"
+default_hotkey = "Ctrl+Alt+V"
+capabilities = ["hotkey", "clipboard_read", "clipboard_write", "drag_out", "file_read", "file_delete", "folder_watch"]
